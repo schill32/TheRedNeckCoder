@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="format-detection" content="telephone=no" />
+<meta name="viewport"
+	content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+<link rel="stylesheet" type="text/css" href="css/index.css" />
+<link rel="stylesheet" type="text/css"
+	href="jquery.mobile-1.3.1/jquery.mobile-1.3.1.min.css" />
+<script type="text/javascript" src="cordova-2.6.0.js"></script>
+<script type="text/javascript" src="js/index.js"></script>
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+<script type="text/javascript"
+	src="jquery.mobile-1.3.1/jquery.mobile-1.3.1.min.js"></script>
+<title>The Redneck Coder - RSS Feed Reader</title>
+</head>
+<body>
+	<div data-role="page" id="home">
+		<div data-role="content">
+			<h1>Redneck Coder - RSS Feed Reader</h1>
+			<button onclick="loadRss();">Load Rss</button>
+			<br />
+			<ul data-role="listview" data-inset="true" data-filter="true"
+				id="topics">
+			</ul>
+		</div>
+	</div>
+	<div data-role="page" id="blogItemView">
+		<div data-role="header" data-position="fixed">
+			<a href="#" data-role="button" data-icon="back" data-rel="back">Home</a>
+			<h1 id="itemHeader">View Post</h1>
+		</div>
+		<div data-role="content">
+			<h3 id="itemTitle">Title</h3>
+			<div id="itemContent">Content</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		app.initialize(); // call the initialize function in the index.js file
+
+		$.mobile.phonegapNavigationEnabled = true; // tell jQuery mobile we are using phonegap
+
+		var blogTopics;
+
+		function loadItem(index) {
+			/* get the item from the array that was clicked
+			* and display insert the contents into the appropriate
+			* elements */
+			var clickedItem = blogTopics[index];
+			$("#itemTitle").text(clickedItem.title);
+			$("#itemContent").html(clickedItem.content);
+		}
+
+		function loadRss() {
+			blogTopics = new Array();
+			$.mobile.loading("show", {
+				text : "Loading...",
+				textVisible : true
+			});
+			$.ajax({
+				url : "http://theredneckcoder.wordpress.com/feed/",
+				dataType : "xml",
+				crossDomain : true
+			}).done(
+					function(data) {
+						var $xml = $(data);
+						var cnt = 0;
+						$xml.find("item")
+								.each(
+										function(data) {
+											var $xmlItem = $(this);
+											var item = {
+												title : $xmlItem.children(
+														"title").text(),
+												link : $xmlItem
+														.children("link")
+														.text(),
+												pubDate : $xmlItem.children(
+														"pubDate").text(),
+												guid : $xmlItem
+														.children("guid")
+														.text(),
+												content : $xmlItem.find(
+														"encoded").text()
+											};
+											blogTopics.push(item);
+											$("#topics").append(
+													'<li><a href="#blogItemView" onclick="loadItem('
+															+ cnt++ + ');">'
+															+ item.title
+															+ '</a></li>');
+										});
+						$("#topics").listview("refresh");
+			}).fail(function(xhr, textStatus, errorThrown) {
+				alert(textStatus.toString());
+			}).always(function() {
+				$.mobile.loading("hide");
+			});
+		}
+	</script>
+</body>
+</html>
